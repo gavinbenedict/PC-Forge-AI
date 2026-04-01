@@ -6,6 +6,7 @@ __pycache__/
 *.pyo
 *.pyd
 *.so
+.venv/
 venv/
 .env
 
@@ -33,7 +34,10 @@ build/
 .vscode/
 
 # =========================
-# Data (keep essential JSON!)
+# Data (IMPORTANT)
 # =========================
-# Ignore large CSV dumps only
+# Ignore large CSVs only
 data/raw/*.csv
+
+# BUT KEEP JSON (your dataset)
+!data/raw/*.json
