@@ -19,8 +19,7 @@ from backend.services.pricing_service import pricing_service
 from backend.services.prediction_service import prediction_service
 from backend.services.recommendation_service import run_recommendations
 from backend.utils.normalizer import normalize_build_spec
-from backend.utils.currency import fx_symbol
-
+from backend.utils.currency import symbol as fx_symbol
 from backend.data.catalogue import master_catalogue
 
 logger = logging.getLogger(__name__)
