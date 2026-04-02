@@ -3,3 +3,5 @@ uvicorn
 rapidfuzz
 pydantic
 numpy
+pandas
+joblib
