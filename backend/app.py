@@ -4,7 +4,6 @@ Production-ready configuration with CORS, lifespan, and structured logging.
 """
 from __future__ import annotations
 import logging
-import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -80,10 +79,13 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
-    # ✅ FIXED CORS (THIS IS THE ONLY CHANGE)
+    # 🔥 FIXED CORS (NO MORE FAILED TO FETCH)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # allow Vercel
+        allow_origins=[
+            "https://pcforge-ai.vercel.app",  # 👈 CHANGE THIS TO YOUR REAL VERCEL URL
+            "http://localhost:3000",
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
