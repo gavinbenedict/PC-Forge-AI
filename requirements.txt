@@ -5,3 +5,5 @@ pydantic
 numpy
 pandas
 joblib
+xgboost
+openpyxl
