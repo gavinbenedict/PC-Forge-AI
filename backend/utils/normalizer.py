@@ -1,15 +1,14 @@
 """
-PCForge AI — Input Normalizer + Fuzzy Matching
+PCForge AI — Input Normalizer + Fuzzy Matching (FIXED)
 """
 from __future__ import annotations
 import re
-from typing import Any, Dict, Optional
-from difflib import get_close_matches
+from typing import Any, Dict, Optional, List
 from rapidfuzz import process, fuzz
 
 
 # ─────────────────────────────────────────────────────────────
-# EXISTING ALIASES (UNCHANGED)
+# ALIASES
 # ─────────────────────────────────────────────────────────────
 
 CPU_ALIASES = {
@@ -48,21 +47,25 @@ def normalize_text(text: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────
-# FUZZY MATCHING (NEW)
+# 🔥 FIXED FUZZY MATCHING (NOW WORKS WITH CatalogueComponent)
 # ─────────────────────────────────────────────────────────────
 
-def find_best_match(query: str, components: list):
+def find_best_match(query: str, components: List[Any]):
+    """
+    components = List[CatalogueComponent]
+    """
     if not query or not components:
         return None
 
     normalized_query = normalize_text(query)
 
-    choices = [comp["name"] for comp in components]
-    normalized_choices = [normalize_text(name) for name in choices]
+    # Extract names from objects
+    names = [comp.full_name for comp in components]
+    normalized_names = [normalize_text(name) for name in names]
 
     result = process.extractOne(
         normalized_query,
-        normalized_choices,
+        normalized_names,
         scorer=fuzz.token_sort_ratio
     )
 
@@ -74,7 +77,7 @@ def find_best_match(query: str, components: list):
     if score < 70:
         return None
 
-    return components[index]
+    return components[index]   # RETURN OBJECT
 
 
 # ─────────────────────────────────────────────────────────────
@@ -93,7 +96,7 @@ def normalize_cpu(raw: Optional[str], catalogue=None):
     if catalogue:
         match = find_best_match(raw, catalogue.components["CPU"])
         if match:
-            return match["name"]
+            return match.full_name   # FIXED
 
     return raw.strip()
 
@@ -114,7 +117,7 @@ def normalize_gpu(raw: Optional[str], catalogue=None):
     if catalogue:
         match = find_best_match(raw, catalogue.components["GPU"])
         if match:
-            return match["name"]
+            return match.full_name   # FIXED
 
     return raw.strip()
 
@@ -133,8 +136,11 @@ def normalize_build_spec(raw_spec: Dict[str, Any], catalogue=None) -> Dict[str, 
         spec["gpu"] = normalize_gpu(spec["gpu"], catalogue)
 
     if spec.get("motherboard") and catalogue:
-        match = find_best_match(spec["motherboard"], catalogue.components["Motherboard"])
+        match = find_best_match(
+            spec["motherboard"],
+            catalogue.components["Motherboard"]
+        )
         if match:
-            spec["motherboard"] = match["name"]
+            spec["motherboard"] = match.full_name   # FIXED
 
     return spec
