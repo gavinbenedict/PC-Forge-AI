@@ -1,5 +1,3 @@
-# ─── ADD THIS INSIDE YOUR MasterCatalogue CLASS ───
-
 class MasterCatalogue:
     def __init__(self) -> None:
         self._components: Dict[str, CatalogueComponent] = {}
@@ -9,15 +7,9 @@ class MasterCatalogue:
         self._source_path: Optional[str] = None
         self._load_result: Optional[LoadResult] = None
 
-    # ─────────────────────────────────────────────
-    # 🔥 FIX: ADD THIS PROPERTY (DO NOT REMOVE)
-    # ─────────────────────────────────────────────
+    # 🔥 COMPATIBILITY FIX (DO NOT TOUCH THIS AGAIN)
     @property
     def components(self) -> Dict[str, List[CatalogueComponent]]:
-        """
-        Compatibility layer for old code using:
-        catalogue.components["CPU"]
-        """
         return self._by_category
 
     # ── Lifecycle ────────────────────────────────
@@ -36,8 +28,7 @@ class MasterCatalogue:
                 source_path=str(data_path),
             )
             self._load_result = result
-            logger.warning(f"Catalogue: dataset not found at {data_path}. "
-                           "Services will use built-in fallback data.")
+            logger.warning("Dataset not found — fallback mode")
             return result
 
         try:
@@ -60,6 +51,7 @@ class MasterCatalogue:
 
             self._loaded = bool(self._components)
             self._source_path = str(data_path)
+
             cat_counts = {k: len(v) for k, v in self._by_category.items()}
 
             result = LoadResult(
@@ -69,17 +61,17 @@ class MasterCatalogue:
                 errors=errors,
                 source_path=str(data_path),
             )
+
             self._load_result = result
 
-            logger.info(
-                f"Catalogue loaded: {len(self._components)} components "
-                f"({cat_counts})"
-            )
+            logger.info(f"Catalogue loaded: {len(self._components)} components ({cat_counts})")
+
             return result
 
         except Exception as exc:
             msg = f"Catalogue load failed: {exc}"
             logger.error(msg)
+
             result = LoadResult(
                 success=False,
                 component_count=0,
@@ -87,6 +79,7 @@ class MasterCatalogue:
                 errors=[msg],
                 source_path=str(data_path),
             )
+
             self._load_result = result
             return result
 
@@ -106,7 +99,7 @@ class MasterCatalogue:
             "source": self._source_path,
         }
 
-    # ── Query Interface ────────────────────────
+    # ── Query ─────────────────────────────────
 
     def get_by_category(self, category: str) -> List[CatalogueComponent]:
         return list(self._by_category.get(category, []))
