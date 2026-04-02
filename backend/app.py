@@ -40,6 +40,7 @@ async def lifespan(app: FastAPI):
 
     raw_dir = Path(__file__).parent.parent / "data" / "raw"
     dataset_path = raw_dir / "pc_parts.json"
+
     if not dataset_path.exists():
         dataset_path = raw_dir / "pc_parts.sample.json"
         if dataset_path.exists():
@@ -58,7 +59,7 @@ async def lifespan(app: FastAPI):
         logger.warning("⚠️ ML fallback")
 
     from backend.data import _get_rules
-    rules = _get_rules()
+    _get_rules()
     logger.info("✅ Compatibility rules loaded")
 
     logger.info("✅ PCForge AI ready")
@@ -79,13 +80,10 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
-    # 🔥 FINAL CORS FIX (WORKS WITH YOUR VERCEL FRONTEND)
+    # 🔥🔥🔥 FINAL REAL FIX — NO MORE CORS BULLSHIT 🔥🔥🔥
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "https://pc-forge-ai.vercel.app",  # ✅ your real frontend
-            "http://localhost:3000"           # optional local testing
-        ],
+        allow_origins=["*"],  # 🚨 THIS FIXES YOUR FAILED FETCH
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -96,10 +94,13 @@ def create_app() -> FastAPI:
         logger.exception("Unhandled exception: %s", exc)
         return JSONResponse(
             status_code=500,
-            content={"error": "Internal server error", "detail": str(exc)},
+            content={
+                "error": "Internal server error",
+                "detail": str(exc),
+            },
         )
 
-    # 🔥 API ROUTES
+    # ─── API ROUTES ─────────────────────────────────────────────
     app.include_router(analyze_router, prefix="/api/v1")
     app.include_router(export_router, prefix="/api/v1")
 
@@ -114,6 +115,8 @@ def create_app() -> FastAPI:
     return app
 
 
+# ─── APP INSTANCE ─────────────────────────────────────────────────────────────
+
 app = create_app()
 
 
@@ -121,6 +124,7 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "backend.app:app",
         host="0.0.0.0",
