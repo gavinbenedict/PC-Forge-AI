@@ -4,9 +4,11 @@ WORKDIR /app
 
 COPY backend /app/backend
 COPY data /app/data
+COPY requirements.txt /app/requirements.txt
+
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
 WORKDIR /app/backend
-
-RUN pip install --no-cache-dir -r requirements.txt
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
