@@ -79,12 +79,12 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
-    # 🔥 FIXED CORS (NO MORE FAILED TO FETCH)
+    # 🔥 FINAL CORS FIX (WORKS WITH YOUR VERCEL FRONTEND)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            "https://pcforge-ai.vercel.app",  # 👈 CHANGE THIS TO YOUR REAL VERCEL URL
-            "http://localhost:3000",
+            "https://pc-forge-ai.vercel.app",  # ✅ your real frontend
+            "http://localhost:3000"           # optional local testing
         ],
         allow_credentials=True,
         allow_methods=["*"],
@@ -99,6 +99,7 @@ def create_app() -> FastAPI:
             content={"error": "Internal server error", "detail": str(exc)},
         )
 
+    # 🔥 API ROUTES
     app.include_router(analyze_router, prefix="/api/v1")
     app.include_router(export_router, prefix="/api/v1")
 
