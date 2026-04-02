@@ -3,7 +3,8 @@
  * All communication with the FastAPI backend.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+// 🔥 FINAL FIX — HARDCODE YOUR RAILWAY BACKEND
+const API_BASE = "https://pc-forge-ai-production.up.railway.app/api/v1";
 
 export interface RAMSpec {
   size_gb?: number;
@@ -134,10 +135,12 @@ async function apiFetch<T>(
     headers: { "Content-Type": "application/json", ...options.headers },
     ...options,
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || `API error ${res.status}`);
   }
+
   return res.json() as Promise<T>;
 }
 
@@ -154,7 +157,9 @@ export async function exportExcel(analysis: AnalyzeResponse): Promise<Blob> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(analysis),
   });
+
   if (!res.ok) throw new Error("Excel export failed");
+
   return res.blob();
 }
 
@@ -164,7 +169,9 @@ export async function exportCSV(analysis: AnalyzeResponse): Promise<Blob> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(analysis),
   });
+
   if (!res.ok) throw new Error("CSV export failed");
+
   return res.blob();
 }
 
