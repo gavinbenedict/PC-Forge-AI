@@ -54,24 +54,42 @@ def _price_or_predict(
     tier: str,
     usage_type: Optional[str],
 ) -> PricedPart:
-    priced = pricing_service.get_price(model_name, category)
+    """
+    Always returns a valid PricedPart — never raises.
+    Priority: pricing_service (DB/catalogue) → prediction_service → fallback.
+    """
+    # 1. Pricing service (DB + catalogue + fallback built-in)
+    try:
+        priced = pricing_service.get_price(model_name, category)
+        if priced and priced.price_usd > 0:
+            return priced
+    except Exception as exc:
+        logger.warning("pricing_service failed for %s: %s", model_name, exc)
 
-    if priced:
-        return priced
+    # 2. ML prediction
+    try:
+        predicted = prediction_service.build_priced_part_predicted(
+            category=category,
+            brand=brand,
+            model_name=model_name,
+            tier=tier,
+            usage_type=usage_type,
+            specs={},
+        )
+        if predicted and predicted.price_usd > 0:
+            from backend.services.pricing_service import _CATEGORY_FALLBACK, _apply_gpu_floor
+            floor = _CATEGORY_FALLBACK.get(category, 50.0)
+            if category == "GPU":
+                floor = _apply_gpu_floor(model_name, floor)
+            if predicted.price_usd >= floor * 0.5:  # sanity: at least half the floor
+                return predicted
+            logger.warning("Prediction price %.2f below floor %.2f for %s — discarding",
+                           predicted.price_usd, floor, model_name)
+    except Exception as exc:
+        logger.warning("prediction_service failed for %s: %s", model_name, exc)
 
-    predicted = prediction_service.build_priced_part_predicted(
-        category=category,
-        brand=brand,
-        model_name=model_name,
-        tier=tier,
-        usage_type=usage_type,
-        specs={},
-    )
-
-    if not predicted:
-        raise HTTPException(status_code=500, detail=f"Pricing failed for {model_name}")
-
-    return predicted
+    # 3. Hard fallback — guaranteed
+    return pricing_service._fallback_priced_part(model_name, category)
 
 
 # ─────────────────────────────────────────────
@@ -155,6 +173,7 @@ async def analyze_build(spec: BuildSpec) -> AnalyzeResponse:
     pricing: List[PricedPart] = []
     total = 0.0
 
+    # Price resolved single components (CPU, GPU, Motherboard, PSU, Case, Cooler, Monitor)
     for comp in completed_build:
         try:
             priced = _price_or_predict(
@@ -168,6 +187,31 @@ async def analyze_build(spec: BuildSpec) -> AnalyzeResponse:
             total += priced.price_usd
         except Exception as e:
             logger.error("Pricing failed for %s: %s", comp.model, e)
+
+    # Price RAM separately (it's a dict, not in completed_build)
+    if ram and isinstance(ram, dict):
+        ram_model = ram.get("model") or ram.get("name") or "Generic DDR5 32GB RAM"
+        try:
+            ram_priced = _price_or_predict(ram_model, "RAM", "Unknown", inferred_tier, usage_type)
+            pricing.append(ram_priced)
+            total += ram_priced.price_usd
+        except Exception as e:
+            logger.error("RAM pricing failed: %s", e)
+
+    # Price storage drives (each entry in the list)
+    for drive in storage:
+        if not drive:
+            continue
+        drive_model = (
+            drive.get("model") or drive.get("name") or "Generic 1TB NVMe SSD"
+            if isinstance(drive, dict) else str(drive)
+        )
+        try:
+            drive_priced = _price_or_predict(drive_model, "Storage", "Unknown", inferred_tier, usage_type)
+            pricing.append(drive_priced)
+            total += drive_priced.price_usd
+        except Exception as e:
+            logger.error("Storage pricing failed for %s: %s", drive_model, e)
 
     currency = "USD"
 

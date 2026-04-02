@@ -80,10 +80,15 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
-    # 🔥🔥🔥 FINAL REAL FIX — NO MORE CORS BULLSHIT 🔥🔥🔥
+    # CORS — allow_origins=["*"] with allow_credentials=True is INVALID per spec.
+    # Browsers silently block preflight responses. Use explicit origins.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # 🚨 THIS FIXES YOUR FAILED FETCH
+        allow_origins=[
+            "https://pc-forge-ai.vercel.app",
+            "https://pc-forge-ai-git-main-gabbenedict.vercel.app",
+            "http://localhost:3000",
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

@@ -157,16 +157,89 @@ class MasterCatalogue:
             return result
 
     def is_loaded(self):
-        return self._loaded
+        return self._loaded and bool(self._components)
 
-    def get_by_category(self, category: str):
-        return self._by_category.get(category, [])
+    def get_by_category(self, category: str) -> List[CatalogueComponent]:
+        return list(self._by_category.get(category, []))
 
-    def find_by_name(self, name: str, category: Optional[str] = None):
-        name = name.lower()
-        if name in self._name_index:
-            return self._name_index[name]
+    def get_by_id(self, component_id: str) -> Optional[CatalogueComponent]:
+        return self._components.get(component_id)
+
+    def find_by_name(self, name: str, category: Optional[str] = None) -> Optional[CatalogueComponent]:
+        name_lower = name.strip().lower()
+        direct = self._name_index.get(name_lower)
+        if direct and (category is None or direct.category == category):
+            return direct
+        # Normalize: strip punctuation and retry
+        norm = re.sub(r'[^a-z0-9]', '', name_lower)
+        for key, comp in self._name_index.items():
+            if category and comp.category != category:
+                continue
+            if re.sub(r'[^a-z0-9]', '', key) == norm:
+                return comp
         return None
+
+    def stats(self) -> Dict[str, Any]:
+        return {
+            "loaded":     self.is_loaded(),
+            "total":      len(self._components),
+            "categories": {k: len(v) for k, v in self._by_category.items()},
+            "source":     self._source_path,
+        }
+
+    # ── Compatibility-specific lookups ────────────────────────────────────────
+
+    def get_cpu_socket(self, cpu_name: str) -> Optional[str]:
+        comp = self.find_by_name(cpu_name, "CPU")
+        return comp.socket if comp else None
+
+    def get_cpu_tdp(self, cpu_name: str) -> Optional[int]:
+        comp = self.find_by_name(cpu_name, "CPU")
+        return comp.tdp_w if comp else None
+
+    def get_mb_socket(self, mb_name: str) -> Optional[str]:
+        comp = self.find_by_name(mb_name, "Motherboard")
+        return comp.socket if comp else None
+
+    def get_mb_ram_types(self, mb_name: str) -> List[str]:
+        comp = self.find_by_name(mb_name, "Motherboard")
+        return comp.ram_types if comp else []
+
+    def get_mb_form_factor(self, mb_name: str) -> Optional[str]:
+        comp = self.find_by_name(mb_name, "Motherboard")
+        return comp.form_factor if comp else None
+
+    def get_mb_max_ram(self, mb_name: str) -> Optional[int]:
+        comp = self.find_by_name(mb_name, "Motherboard")
+        return comp.max_ram_gb if comp else None
+
+    def get_gpu_length(self, gpu_name: str) -> Optional[int]:
+        comp = self.find_by_name(gpu_name, "GPU")
+        return comp.length_mm if comp else None
+
+    def get_gpu_tdp(self, gpu_name: str) -> Optional[int]:
+        comp = self.find_by_name(gpu_name, "GPU")
+        return comp.power_draw_w if comp else None
+
+    def get_case_gpu_clearance(self, case_name: str) -> Optional[int]:
+        comp = self.find_by_name(case_name, "Case")
+        return comp.gpu_clearance_mm if comp else None
+
+    def get_case_cooler_clearance(self, case_name: str) -> Optional[int]:
+        comp = self.find_by_name(case_name, "Case")
+        return comp.cooler_clearance_mm if comp else None
+
+    def get_case_form_factors(self, case_name: str) -> List[str]:
+        comp = self.find_by_name(case_name, "Case")
+        return comp.supported_form_factors if comp else []
+
+    def get_cooler_height(self, cooler_name: str) -> Optional[int]:
+        comp = self.find_by_name(cooler_name, "Cooler")
+        return comp.height_mm if comp else None
+
+    def get_price(self, name: str, category: Optional[str] = None) -> Optional[float]:
+        comp = self.find_by_name(name, category)
+        return comp.price_usd if comp else None
 
 
 master_catalogue = MasterCatalogue()
