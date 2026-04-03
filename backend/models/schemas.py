@@ -12,7 +12,7 @@ from datetime import datetime
 
 UsageType = Literal["gaming", "streaming", "editing", "workstation", "mixed", "office"]
 Region = Literal["US", "EU", "UK", "IN", "CA", "AU"]
-PriceSource = Literal["live", "simulated", "predicted"]
+PriceSource = Literal["live", "simulated", "predicted", "fallback"]
 CompatibilityStatus = Literal["valid", "warning", "invalid"]
 BuildTier = Literal["budget", "mid-range", "high-end", "enthusiast"]
 
