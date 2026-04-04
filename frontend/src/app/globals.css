@@ -28,6 +28,9 @@
   --text-main:        var(--text-primary);  /* canonical heading colour */
   --accent-primary:   #FF0000;              /* canonical accent / red */
 
+  /* Header */
+  --bg-header:        #000000;
+
   /* Accent: Red */
   --red:              #FF0000;
   --red-dim:          rgba(255, 0, 0, 0.12);
@@ -84,7 +87,7 @@
   --text-dim:         #9a9a9a;
   --text-code:        #1a1a1a;
 
-  --accent-primary:   #ff3c1f;   /* slightly warmer red for light bg */
+  --accent-primary:   #ff3c1f;
   --red:              #ff3c1f;
   --red-dim:          rgba(255, 60, 31, 0.10);
   --red-border:       rgba(255, 60, 31, 0.40);
@@ -95,6 +98,9 @@
   --border-active:    #d4d0c8;
   --border-strong:    #b8b4aa;
   --border-subtle:    #e8e6df;
+
+  /* Header adapts to warm white in light mode */
+  --bg-header:        #fdfcf9;
 }
 
 /* ── Reset ─────────────────────────────────────────────── */
@@ -285,8 +291,8 @@ h1, h2, h3, h4, h5, h6 {
   right: 0;
   z-index: 100;
   height: var(--navbar-h);
-  background: #000;
-  border-bottom: 1px solid var(--border);
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   padding: 0 24px;
@@ -314,7 +320,7 @@ h1, h2, h3, h4, h5, h6 {
   justify-content: center;
   font-size: 14px;
   font-weight: 800;
-  color: #000;
+  color: #0a0a0a;   /* dark label on red icon — intentional, not theme-sensitive */
   flex-shrink: 0;
 }
 
@@ -392,7 +398,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 .btn-primary:hover {
   background: var(--red);
-  color: #000;
+  color: var(--bg-void);     /* dark-on-red or light-on-red based on theme */
   box-shadow: 0 0 20px var(--red-glow);
 }
 
@@ -422,11 +428,12 @@ h1, h2, h3, h4, h5, h6 {
 .btn-cta {
   background: var(--red);
   border-color: var(--red);
-  color: #000;
+  color: #0a0a0a;    /* dark label on solid red — intentional contrast color */
   font-weight: 800;
 }
 .btn-cta:hover {
   background: var(--red-bright);
+  color: #0a0a0a;
   box-shadow: 0 0 30px var(--red-glow);
   transform: translateY(-1px);
 }
@@ -815,7 +822,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .step-num.done {
   border-color: var(--green);
-  color: #000;
+  color: #0a0a0a;   /* dark label on green fill — intentional */
   background: var(--green);
 }
 

@@ -3,7 +3,6 @@
  */
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
-import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -35,7 +34,6 @@ export default function RootLayout({
       <body>
         <Navbar />
         {children}
-        <ThemeToggle />
       </body>
     </html>
   );
