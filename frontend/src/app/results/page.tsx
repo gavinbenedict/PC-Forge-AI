@@ -74,9 +74,11 @@ type TabId = (typeof TABS)[number]["id"];
 function CompCard({
   comp,
   price,
+  sym,
 }: {
   comp: ResolvedComponent;
   price?: PricedPart;
+  sym: string;
 }) {
   return (
     <div className={`comp-card ${comp.is_auto_filled ? "autofill" : ""}`}>
@@ -95,7 +97,7 @@ function CompCard({
             price.source === "predicted" ? "predicted" : ""
           }`}
         >
-          ${fmt(price.price_usd)}
+          {sym}{fmt(price.price_usd)}
           <span
             style={{
               fontSize: 10,
@@ -120,6 +122,17 @@ export default function ResultsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [exporting, setExporting] = useState<"excel" | "csv" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [theme, setTheme] = useState("dark");
+
+  // Persist theme
+  useEffect(() => {
+    const saved = localStorage.getItem("pcforge_theme");
+    if (saved) setTheme(saved);
+  }, []);
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("pcforge_theme", theme);
+  }, [theme]);
 
   // Load from sessionStorage
   useEffect(() => {
@@ -170,6 +183,7 @@ export default function ResultsPage() {
   const tierCfg   = TIER_CONFIG[tier] || TIER_CONFIG["mid-range"];
   const prices    = priceMap();
   const summary   = data.price_summary;
+  const sym       = summary.symbol || "$";
   const compat    = data.compatibility;
   const recs      = data.recommendations;
   const errorCount = compat.issues.filter((i) => i.severity === "error").length;
@@ -202,6 +216,26 @@ export default function ResultsPage() {
 
   return (
     <div className="results-layout content-layer">
+      {/* ── Theme toggle ───────────────────────────────────────── */}
+      <button
+        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        style={{
+          position: "fixed",
+          top: "20px",
+          right: "20px",
+          zIndex: 9999,
+          background: "transparent",
+          border: "1px solid var(--border)",
+          borderRadius: 6,
+          padding: "6px 10px",
+          cursor: "pointer",
+          fontSize: 16,
+          lineHeight: 1,
+        }}
+        aria-label="Toggle theme"
+      >
+        {theme === "dark" ? "☀️" : "🌙"}
+      </button>
       {/* ── Results header ────────────────────────────────────── */}
       <div className="results-header">
         <div className="container">
@@ -307,31 +341,31 @@ export default function ResultsPage() {
               <div className="stat-block">
                 <div className="stat-label">Total Cost</div>
                 <div className="stat-value green">
-                  ${fmt(summary.total_combined_usd)}
+                  {sym}{fmt(summary.total_combined_usd)}
                 </div>
               </div>
               <div className="stat-block">
                 <div className="stat-label">Live Prices</div>
                 <div className="stat-value">
-                  ${fmt(summary.total_live_usd)}
+                  {sym}{fmt(summary.total_live_usd)}
                 </div>
               </div>
               <div className="stat-block">
                 <div className="stat-label">ML Predicted</div>
                 <div className="stat-value amber">
-                  ${fmt(summary.total_predicted_usd)}
+                  {sym}{fmt(summary.total_predicted_usd)}
                 </div>
               </div>
               <div className="stat-block">
                 <div className="stat-label">Market Low</div>
                 <div className="stat-value">
-                  ${fmt(summary.market_range.min_price)}
+                  {sym}{fmt(summary.market_range.min_price)}
                 </div>
               </div>
               <div className="stat-block">
                 <div className="stat-label">Market High</div>
                 <div className="stat-value">
-                  ${fmt(summary.market_range.max_price)}
+                  {sym}{fmt(summary.market_range.max_price)}
                 </div>
               </div>
               <div className="stat-block">
@@ -389,6 +423,7 @@ export default function ResultsPage() {
                     key={`${comp.category}-${comp.model}`}
                     comp={comp}
                     price={price}
+                    sym={sym}
                   />
                 );
               })}
@@ -450,7 +485,7 @@ export default function ResultsPage() {
               <div className="stat-block">
                 <div className="stat-label">Total (Combined)</div>
                 <div className="stat-value green mono-val">
-                  ${fmt(summary.total_combined_usd)}
+                  {sym}{fmt(summary.total_combined_usd)}
                 </div>
               </div>
               <div className="stat-block">
@@ -497,7 +532,7 @@ export default function ResultsPage() {
                           }
                           style={{ textAlign: "right" }}
                         >
-                          ${fmt(p.price_usd)}
+                          {sym}{fmt(p.price_usd)}
                           {p.predicted_range && (
                             <span
                               style={{
@@ -507,8 +542,8 @@ export default function ResultsPage() {
                                 fontWeight: 400,
                               }}
                             >
-                              ${fmt(p.predicted_range.min_price)} –{" "}
-                              ${fmt(p.predicted_range.max_price)}
+                              {sym}{fmt(p.predicted_range.min_price)} –{" "}
+                              {sym}{fmt(p.predicted_range.max_price)}
                             </span>
                           )}
                         </td>
@@ -537,7 +572,7 @@ export default function ResultsPage() {
                           fontVariantNumeric: "tabular-nums",
                         }}
                       >
-                        ${fmt(summary.total_combined_usd)}
+                        {sym}{fmt(summary.total_combined_usd)}
                       </td>
                     </tr>
                   </tbody>
@@ -713,7 +748,7 @@ export default function ResultsPage() {
                           className="td-price"
                           style={{ textAlign: "right" }}
                         >
-                          ${fmt(r.price_usd)}
+                          {sym}{fmt(r.price_usd)}
                         </td>
                         <td>
                           <span
@@ -777,7 +812,7 @@ export default function ResultsPage() {
                                 className="td-price"
                                 style={{ textAlign: "right" }}
                               >
-                                ${fmt(alt.price_usd)}
+                                {sym}{fmt(alt.price_usd)}
                               </td>
                             </tr>
                           ))
@@ -831,7 +866,7 @@ export default function ResultsPage() {
       {/* ── Sticky export bar ─────────────────────────────────── */}
       <div className="export-bar">
         <div className="export-bar-info">
-          <strong>${fmt(summary.total_combined_usd)}</strong> ·{" "}
+          <strong>{sym}{fmt(summary.total_combined_usd)}</strong> ·{" "}
           {data.completed_build.length} components ·{" "}
           Build{" "}
           <strong style={{ color: "var(--red)" }}>

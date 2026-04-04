@@ -19,6 +19,7 @@ from backend.services.pricing_service import pricing_service
 from backend.services.prediction_service import prediction_service
 from backend.services.recommendation_service import run_recommendations
 from backend.utils.normalizer import normalize_build_spec
+from backend.utils.currency import symbol as fx_symbol
 from backend.data.catalogue import master_catalogue
 
 logger = logging.getLogger(__name__)
@@ -186,6 +187,12 @@ async def analyze_build(spec: BuildSpec) -> AnalyzeResponse:
     usage_type  = normalized.get("usage_type")
     budget_usd  = normalized.get("budget_usd")
     preferred_brand = normalized.get("preferred_brand")
+
+    # Region → currency → symbol
+    region   = spec.region or "US"
+    _REGION_CURRENCY = {"US": "USD", "EU": "EUR", "UK": "GBP", "IN": "INR", "CA": "CAD", "AU": "AUD"}
+    currency = _REGION_CURRENCY.get(region, "USD")
+    sym      = fx_symbol(currency)
 
     # RAM — may be a RAMSpec Pydantic object, dict, or None
     ram_raw  = normalized.get("ram") or spec.ram
@@ -374,8 +381,9 @@ async def analyze_build(spec: BuildSpec) -> AnalyzeResponse:
             ),
             live_parts_count=live_count,
             predicted_parts_count=predicted_count,
-            currency="USD",
-            region="US",
+            currency=currency,
+            symbol=sym,
+            region=region,
         ),
         notes=notes,
         inferred_tier=inferred_tier,

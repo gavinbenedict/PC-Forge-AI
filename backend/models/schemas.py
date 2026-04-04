@@ -150,6 +150,7 @@ class PriceSummary(BaseModel):
     live_parts_count: int
     predicted_parts_count: int
     currency: str = "USD"
+    symbol: str = "$"
     region: str = "US"
 
 

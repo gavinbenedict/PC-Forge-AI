@@ -65,7 +65,7 @@ export interface PricedPart {
   availability: string;
   url: string;
   last_updated: string;
-  source: "live" | "simulated" | "predicted";
+  source: "live" | "simulated" | "predicted" | "fallback";
   predicted_range?: PriceRange;
 }
 
@@ -109,6 +109,7 @@ export interface PriceSummary {
   live_parts_count: number;
   predicted_parts_count: number;
   currency: string;
+  symbol: string;
   region: string;
 }
 

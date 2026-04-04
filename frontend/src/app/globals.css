@@ -62,6 +62,25 @@
   --r-xl:             8px;
 }
 
+/* ── Light theme overrides ──────────────────────────────────── */
+[data-theme="light"] {
+  --bg-void:          #ffffff;
+  --bg-base:          #f8f8f8;
+  --bg-surface:       #f2f2f2;
+  --bg-card:          #eeeeee;
+  --bg-card-hover:    #e5e5e5;
+  --bg-input:         #f0f0f0;
+  --bg-overlay:       rgba(255, 255, 255, 0.85);
+  --text-primary:     #000000;
+  --text-secondary:   #333333;
+  --text-muted:       #888888;
+  --text-dim:         #bbbbbb;
+  --text-code:        #111111;
+  --border:           rgba(0, 0, 0, 0.10);
+  --border-active:    rgba(0, 0, 0, 0.22);
+  --border-strong:    rgba(0, 0, 0, 0.35);
+}
+
 /* ── Reset ──────────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -73,15 +92,15 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #000;
+  background: var(--bg-void, #000);
 }
 
 body {
   font-family: var(--font);
   font-size: 14px;
   line-height: 1.6;
-  background: #000;
-  color: var(--text-primary);
+  background: var(--bg-void, #000);
+  color: var(--text-primary, #fff);
   min-height: 100vh;
   overflow-x: hidden;
 }
