@@ -137,16 +137,6 @@ export default function BuilderPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [theme, setTheme] = useState("dark");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("pcforge_theme");
-    if (saved) setTheme(saved);
-  }, []);
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("pcforge_theme", theme);
-  }, [theme]);
 
   // ── Restore form state from localStorage ───────────────────────
   const _ls = (key: string, fallback: string) => {
@@ -273,26 +263,6 @@ export default function BuilderPage() {
   return (
     <div className="builder-layout">
       <ParticleCanvas />
-      {/* ── Theme toggle ────────────────────────────────────── */}
-      <button
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        style={{
-          position: "fixed",
-          top: "20px",
-          right: "20px",
-          zIndex: 9999,
-          background: "transparent",
-          border: "1px solid var(--border)",
-          borderRadius: 6,
-          padding: "6px 10px",
-          cursor: "pointer",
-          fontSize: 16,
-          lineHeight: 1,
-        }}
-        aria-label="Toggle theme"
-      >
-        {theme === "dark" ? "☀️" : "🌙"}
-      </button>
 
       {/* ── Header ─────────────────────────────────────────────── */}
       <div className="builder-header content-layer">

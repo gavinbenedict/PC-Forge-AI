@@ -125,17 +125,6 @@ export default function ResultsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [exporting, setExporting] = useState<"excel" | "csv" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [theme, setTheme] = useState("dark");
-
-  // Persist theme
-  useEffect(() => {
-    const saved = localStorage.getItem("pcforge_theme");
-    if (saved) setTheme(saved);
-  }, []);
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("pcforge_theme", theme);
-  }, [theme]);
 
   // Load from sessionStorage
   useEffect(() => {
@@ -209,27 +198,40 @@ export default function ResultsPage() {
 
   return (
     <div className="results-layout content-layer">
-      {/* ── Theme toggle ───────────────────────────────────────── */}
+      {/* ── Back to Builder (fixed bottom-left) ──────────────────── */}
       <button
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        onClick={() => router.push("/builder")}
+        aria-label="Back to builder"
         style={{
           position: "fixed",
-          top: "20px",
-          right: "20px",
+          bottom: "24px",
+          left: "24px",
           zIndex: 9999,
-          background: "transparent",
-          border: "1px solid var(--border)",
-          borderRadius: 6,
-          padding: "6px 10px",
+          padding: "8px 14px",
+          borderRadius: "10px",
+          border: "1px solid var(--border-active)",
+          background: "var(--bg-card)",
+          color: "var(--text-secondary)",
           cursor: "pointer",
-          fontSize: 16,
-          lineHeight: 1,
+          fontSize: 12,
+          fontFamily: "var(--font)",
+          fontWeight: 600,
+          letterSpacing: "0.06em",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.25)",
+          transition: "background 150ms ease, color 150ms ease",
         }}
-        aria-label="Toggle theme"
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-card-hover)";
+          (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-card)";
+          (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
+        }}
       >
-        {theme === "dark" ? "☀️" : "🌙"}
+        ← Builder
       </button>
-      {/* ── Results header ────────────────────────────────────── */}
+      {/* ── Results header ─────────────────────────────────────── */}
       <div className="results-header">
         <div className="container">
           <p className="results-build-id">// BUILD_ID: {data.build_id}</p>

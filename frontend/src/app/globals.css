@@ -62,23 +62,23 @@
   --r-xl:             8px;
 }
 
-/* ── Light theme overrides ──────────────────────────────────── */
+/* ── Light theme overrides — Premium warm white (Apple / Notion style) ──── */
 [data-theme="light"] {
-  --bg-void:          #ffffff;
-  --bg-base:          #f8f8f8;
-  --bg-surface:       #f2f2f2;
-  --bg-card:          #eeeeee;
-  --bg-card-hover:    #e5e5e5;
-  --bg-input:         #f0f0f0;
-  --bg-overlay:       rgba(255, 255, 255, 0.85);
-  --text-primary:     #000000;
-  --text-secondary:   #333333;
-  --text-muted:       #888888;
-  --text-dim:         #bbbbbb;
-  --text-code:        #111111;
-  --border:           rgba(0, 0, 0, 0.10);
-  --border-active:    rgba(0, 0, 0, 0.22);
-  --border-strong:    rgba(0, 0, 0, 0.35);
+  --bg-void:          #fdfcf9;   /* warm white — slight yellow tint, never harsh */
+  --bg-base:          #f9f8f4;
+  --bg-surface:       #f7f5f0;   /* slightly deeper warm white */
+  --bg-card:          #ffffff;   /* cards stay crisp for contrast */
+  --bg-card-hover:    #f3f1eb;
+  --bg-input:         #f5f4ef;
+  --bg-overlay:       rgba(253, 252, 249, 0.90);
+  --text-primary:     #0f0f0f;
+  --text-secondary:   #2e2e2e;
+  --text-muted:       #5c5c5c;
+  --text-dim:         #9a9a9a;
+  --text-code:        #1a1a1a;
+  --border:           #e8e6df;
+  --border-active:    #d4d0c8;
+  --border-strong:    #b8b4aa;
 }
 
 /* ── Reset ──────────────────────────────────────────────────── */
