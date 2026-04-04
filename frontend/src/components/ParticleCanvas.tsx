@@ -84,33 +84,27 @@ export default function ParticleCanvas() {
         p.pulse += 0.012;
       }
 
-      // ── Theme helpers — called per-draw so toggle is instant ──
-      const getTheme = () =>
-        document.documentElement.getAttribute("data-theme") || "dark";
-
-      const getNodeColor = (alpha: number) => {
-        return getTheme() === "dark"
-          ? `rgba(255,255,255,${(alpha * 0.35).toFixed(3)})`
-          : `rgba(0,0,0,${(alpha * 0.12).toFixed(3)})`;
-      };
-
-      const getLinkColor = (alpha: number, isRedLink: boolean) => {
-        if (isRedLink) {
-          const r = getTheme() === "dark" ? "255,40,40" : "220,60,30";
-          return `rgba(${r},${(alpha * (getTheme() === "dark" ? 0.18 : 0.12)).toFixed(3)})`;
+      // ── Theme-aware styles — resolved once per frame ───────────
+      const getParticleStyles = () => {
+        const theme =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        if (theme === "dark") {
+          return {
+            dot:    "rgba(255,255,255,0.55)",
+            line:   "rgba(255,255,255,0.25)",
+            redRgb: "255,40,40",
+          };
         }
-        return getTheme() === "dark"
-          ? `rgba(255,255,255,${(alpha * 0.12).toFixed(3)})`
-          : `rgba(0,0,0,${(alpha * 0.08).toFixed(3)})`;
+        return {
+          dot:    "rgba(0,0,0,0.35)",
+          line:   "rgba(0,0,0,0.18)",
+          redRgb: "220,60,30",
+        };
       };
-
-      const getRedColor = (alpha: number) => {
-        const r = getTheme() === "dark" ? "255,40,40" : "220,60,30";
-        return `rgba(${r},${alpha.toFixed(3)})`;
-      };
+      const styles = getParticleStyles();
 
       // Draw links
-      ctx.lineWidth = 0.4;
+      ctx.lineWidth = 0.5;
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
         for (let j = i + 1; j < particles.length; j++) {
@@ -120,25 +114,32 @@ export default function ParticleCanvas() {
           const d2 = dx * dx + dy * dy;
           if (d2 > LINK_DIST * LINK_DIST) continue;
 
-          const t     = 1 - Math.sqrt(d2) / LINK_DIST;
-          ctx.strokeStyle = getLinkColor(t, a.isRed || b.isRed);
+          // Fade link by distance; use red tint if either node is red
+          const t = 1 - Math.sqrt(d2) / LINK_DIST;
+          if (a.isRed || b.isRed) {
+            ctx.strokeStyle = `rgba(${styles.redRgb},${(t * 0.35).toFixed(3)})`;
+          } else {
+            ctx.strokeStyle = styles.line;
+            ctx.globalAlpha = t;
+          }
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
           ctx.lineTo(b.x, b.y);
           ctx.stroke();
+          ctx.globalAlpha = 1;
         }
       }
 
-      // Draw particles — color computed per particle so theme switch is instant
+      // Draw particles
       for (const p of particles) {
         if (p.isRed) {
-          const pAlpha = p.alpha * (0.7 + 0.3 * Math.sin(p.pulse));
+          const pAlpha = 0.7 + 0.3 * Math.sin(p.pulse);
           const pRad   = p.radius * (1 + 0.25 * Math.sin(p.pulse));
 
           // Outer glow
           const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pRad * 4);
-          grd.addColorStop(0, getRedColor(pAlpha * 0.6));
-          grd.addColorStop(1, getRedColor(0));
+          grd.addColorStop(0, `rgba(${styles.redRgb},${(pAlpha * 0.6).toFixed(3)})`);
+          grd.addColorStop(1, `rgba(${styles.redRgb},0)`);
           ctx.beginPath();
           ctx.arc(p.x, p.y, pRad * 4, 0, Math.PI * 2);
           ctx.fillStyle = grd;
@@ -147,12 +148,12 @@ export default function ParticleCanvas() {
           // Core dot
           ctx.beginPath();
           ctx.arc(p.x, p.y, pRad, 0, Math.PI * 2);
-          ctx.fillStyle = getRedColor(pAlpha);   // computed per particle
+          ctx.fillStyle = `rgba(${styles.redRgb},${pAlpha.toFixed(3)})`;
           ctx.fill();
         } else {
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = getNodeColor(p.alpha);  // computed per particle
+          ctx.fillStyle = styles.dot;
           ctx.fill();
         }
       }
