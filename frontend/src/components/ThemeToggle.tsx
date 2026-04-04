@@ -5,7 +5,6 @@ export default function ThemeToggle() {
   const [theme, setTheme] = useState("dark");
   const [mounted, setMounted] = useState(false);
 
-  // Hydration guard: don't render until client-side
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem("pcforge_theme");
@@ -26,33 +25,50 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      aria-label="Toggle theme"
+      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
       style={{
-        position: "fixed",
-        bottom: "24px",
-        right: "24px",
-        zIndex: 9999,
-        padding: "8px 12px",
-        borderRadius: "10px",
-        border: "1px solid var(--border-active)",
-        background: "var(--bg-card)",
-        color: "var(--text-primary)",
-        cursor: "pointer",
-        fontSize: 18,
-        lineHeight: 1,
-        boxShadow: "0 2px 12px rgba(0,0,0,0.25)",
-        transition: "background 150ms ease, border-color 150ms ease",
+        /* Positioning */
+        position:   "fixed",
+        bottom:     "24px",
+        right:      "24px",
+        zIndex:     9999,
+
+        /* Sizing */
+        padding:    "7px 14px",
+        borderRadius: "6px",
+
+        /* Terminal aesthetic */
+        fontFamily:     "var(--font)",
+        fontSize:       "10px",
+        fontWeight:     700,
+        letterSpacing:  "0.18em",
+        lineHeight:     1,
+
+        /* Colors — always dark/glassy regardless of page theme */
+        background:     "rgba(0, 0, 0, 0.82)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        color:          "#b0b0b0",
+        border:         "1px solid #3a3a3a",
+
+        cursor:  "pointer",
+        boxShadow: "0 2px 16px rgba(0,0,0,0.5)",
+
+        /* Transition only for hover — not caught by global rule */
+        transition: "color 0.15s ease, border-color 0.15s ease",
       }}
-      onMouseEnter={(e) =>
-        ((e.currentTarget as HTMLButtonElement).style.background =
-          "var(--bg-card-hover)")
-      }
-      onMouseLeave={(e) =>
-        ((e.currentTarget as HTMLButtonElement).style.background =
-          "var(--bg-card)")
-      }
+      onMouseEnter={(e) => {
+        const btn = e.currentTarget as HTMLButtonElement;
+        btn.style.color       = "#ffffff";
+        btn.style.borderColor = "#ffffff";
+      }}
+      onMouseLeave={(e) => {
+        const btn = e.currentTarget as HTMLButtonElement;
+        btn.style.color       = "#b0b0b0";
+        btn.style.borderColor = "#3a3a3a";
+      }}
     >
-      {theme === "dark" ? "☀️" : "🌙"}
+      {theme === "dark" ? "LIGHT" : "DARK"}
     </button>
   );
 }

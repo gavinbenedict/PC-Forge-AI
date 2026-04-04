@@ -24,6 +24,10 @@
   --text-dim:         #333333;
   --text-code:        #E8E8E8;
 
+  /* Semantic aliases used across components */
+  --text-main:        var(--text-primary);  /* canonical heading colour */
+  --accent-primary:   #FF0000;              /* canonical accent / red */
+
   /* Accent: Red */
   --red:              #FF0000;
   --red-dim:          rgba(255, 0, 0, 0.12);
@@ -43,6 +47,7 @@
   --border-active:    rgba(255, 255, 255, 0.18);
   --border-strong:    rgba(255, 255, 255, 0.30);
   --border-red:       rgba(255, 0, 0, 0.50);
+  --border-subtle:    rgba(255, 255, 255, 0.08); /* alias */
 
   /* Typography */
   --font:             'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
@@ -62,44 +67,70 @@
   --r-xl:             8px;
 }
 
-/* ── Light theme overrides — Premium warm white (Apple / Notion style) ──── */
+/* ── Light theme overrides — Premium warm white (Apple / Notion / Linear style) */
 [data-theme="light"] {
-  --bg-void:          #fdfcf9;   /* warm white — slight yellow tint, never harsh */
+  --bg-void:          #fdfcf9;   /* warm white — ~0.1% yellow tint, never harsh */
   --bg-base:          #f9f8f4;
-  --bg-surface:       #f7f5f0;   /* slightly deeper warm white */
+  --bg-surface:       #f7f5f0;
   --bg-card:          #ffffff;   /* cards stay crisp for contrast */
   --bg-card-hover:    #f3f1eb;
   --bg-input:         #f5f4ef;
-  --bg-overlay:       rgba(253, 252, 249, 0.90);
-  --text-primary:     #0f0f0f;
+  --bg-overlay:       rgba(253, 252, 249, 0.92);
+
+  --text-primary:     #111111;
+  --text-main:        #111111;   /* override semantic alias */
   --text-secondary:   #2e2e2e;
   --text-muted:       #5c5c5c;
   --text-dim:         #9a9a9a;
   --text-code:        #1a1a1a;
+
+  --accent-primary:   #ff3c1f;   /* slightly warmer red for light bg */
+  --red:              #ff3c1f;
+  --red-dim:          rgba(255, 60, 31, 0.10);
+  --red-border:       rgba(255, 60, 31, 0.40);
+  --red-glow:         rgba(255, 60, 31, 0.20);
+  --red-bright:       #ff5533;
+
   --border:           #e8e6df;
   --border-active:    #d4d0c8;
   --border-strong:    #b8b4aa;
+  --border-subtle:    #e8e6df;
 }
 
-/* ── Reset ──────────────────────────────────────────────────── */
+/* ── Reset ─────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* ── Global theme transitions ───────────────────────────────── */
+html, body, *:not(canvas) {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html, body, *:not(canvas) {
+    transition: none !important;
+  }
+}
+
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--bg-void, #000);
+  background-color: var(--bg-void, #000);
+  color: var(--text-primary, #fff);
 }
 
 body {
   font-family: var(--font);
   font-size: 14px;
   line-height: 1.6;
-  background: var(--bg-void, #000);
+  background-color: var(--bg-void, #000);
   color: var(--text-primary, #fff);
   min-height: 100vh;
   overflow-x: hidden;

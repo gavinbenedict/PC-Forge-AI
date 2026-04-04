@@ -1,7 +1,9 @@
 "use client";
 /**
  * PCForge AI — Retro Particle Background
- * Canvas-based constellation with white + faint red nodes.
+ * Canvas-based constellation with theme-aware colors.
+ * Dark mode: white nodes + faint red accents.
+ * Light mode: dark nodes (subtle, not distracting) + warm red accents.
  * Sits at z-index 0, never occludes content.
  */
 import { useEffect, useRef, useCallback } from "react";
@@ -14,18 +16,18 @@ interface Particle {
   radius: number;
   alpha: number;
   isRed: boolean;
-  pulse: number;       // phase offset for pulsing red nodes
+  pulse: number;
 }
 
-const LINK_DIST    = 110;   // max distance to draw a line
-const RED_CHANCE   = 0.06;  // 6% of particles glow red
+const LINK_DIST    = 110;
+const RED_CHANCE   = 0.06;
 const SPEED_MAX    = 0.28;
-const DENSITY      = 14000; // 1 particle per N px²
+const DENSITY      = 14000;
 
 export default function ParticleCanvas() {
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const animRef    = useRef<number>(0);
-  const timeRef    = useRef<number>(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef   = useRef<number>(0);
+  const timeRef   = useRef<number>(0);
 
   const buildParticles = useCallback(
     (w: number, h: number): Particle[] => {
@@ -52,7 +54,6 @@ export default function ParticleCanvas() {
 
     let particles: Particle[] = [];
 
-    // ── Resize handler ───────────────────────────────────────────
     const resize = () => {
       canvas.width  = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -63,46 +64,53 @@ export default function ParticleCanvas() {
     const resizeHandler = () => resize();
     window.addEventListener("resize", resizeHandler);
 
-    // ── Animation loop ───────────────────────────────────────────
     const draw = (ts: number) => {
-      const dt = Math.min(ts - timeRef.current, 50); // cap at 50ms
+      const dt = Math.min(ts - timeRef.current, 50);
       timeRef.current = ts;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // ── Read current theme on every frame ─────────────────────
+      const isLight =
+        document.documentElement.getAttribute("data-theme") === "light";
+
+      // Palette based on theme
+      const nodeColor   = isLight ? "0,0,0"         : "255,255,255";
+      const linkAlphaMul = isLight ? 0.08            : 0.12;
+      const nodeAlphaMul = isLight ? 0.18            : 1.0;  // lighter = more subtle
+      const redR         = isLight ? "220,60,30"     : "255,40,40";
+
       const w = canvas.width;
       const h = canvas.height;
 
-      // Move particles
       for (const p of particles) {
         p.x += p.vx;
         p.y += p.vy;
-        // Wrap
-        if (p.x < 0)  p.x = w;
-        if (p.x > w)  p.x = 0;
-        if (p.y < 0)  p.y = h;
-        if (p.y > h)  p.y = 0;
+        if (p.x < 0) p.x = w;
+        if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h;
+        if (p.y > h) p.y = 0;
         p.pulse += 0.012;
       }
 
-      // Draw links (O(n²) — kept low by density cap)
+      // Draw links
       ctx.lineWidth = 0.4;
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
         for (let j = i + 1; j < particles.length; j++) {
-          const b   = particles[j];
-          const dx  = a.x - b.x;
-          const dy  = a.y - b.y;
-          const d2  = dx * dx + dy * dy;
+          const b  = particles[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const d2 = dx * dx + dy * dy;
           if (d2 > LINK_DIST * LINK_DIST) continue;
 
           const t     = 1 - Math.sqrt(d2) / LINK_DIST;
-          const alpha = t * 0.12;
+          const alpha = t * linkAlphaMul;
 
           if (a.isRed || b.isRed) {
-            ctx.strokeStyle = `rgba(255, 40, 40, ${alpha * 1.5})`;
+            ctx.strokeStyle = `rgba(${redR}, ${alpha * 1.5})`;
           } else {
-            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.strokeStyle = `rgba(${nodeColor}, ${alpha})`;
           }
 
           ctx.beginPath();
@@ -115,17 +123,13 @@ export default function ParticleCanvas() {
       // Draw particles
       for (const p of particles) {
         if (p.isRed) {
-          // Pulsing red node
           const pAlpha = p.alpha * (0.7 + 0.3 * Math.sin(p.pulse));
           const pRad   = p.radius * (1 + 0.25 * Math.sin(p.pulse));
 
           // Outer glow
-          const grd = ctx.createRadialGradient(
-            p.x, p.y, 0,
-            p.x, p.y, pRad * 4
-          );
-          grd.addColorStop(0, `rgba(255, 30, 30, ${pAlpha * 0.6})`);
-          grd.addColorStop(1, "rgba(255, 0, 0, 0)");
+          const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pRad * 4);
+          grd.addColorStop(0, `rgba(${redR}, ${pAlpha * 0.6})`);
+          grd.addColorStop(1, `rgba(${redR}, 0)`);
           ctx.beginPath();
           ctx.arc(p.x, p.y, pRad * 4, 0, Math.PI * 2);
           ctx.fillStyle = grd;
@@ -134,13 +138,14 @@ export default function ParticleCanvas() {
           // Core dot
           ctx.beginPath();
           ctx.arc(p.x, p.y, pRad, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 60, 60, ${pAlpha})`;
+          ctx.fillStyle = `rgba(${redR}, ${pAlpha})`;
           ctx.fill();
         } else {
-          // White particle
+          // Normal node — dimmed in light mode
+          const a = p.alpha * nodeAlphaMul;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+          ctx.fillStyle = `rgba(${nodeColor}, ${a})`;
           ctx.fill();
         }
       }
