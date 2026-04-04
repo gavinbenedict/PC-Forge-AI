@@ -365,10 +365,4 @@ PC Forge Ai/
 
 ---
 
-## Demo
-
-*(Demo video and live link placeholder — coming soon)*
-
----
-
 PCForge AI v2.0 — Dataset-Driven · Strict Matching · Full Compatibility · Multi-Currency
