@@ -133,7 +133,7 @@ function FieldSection({
 export default function BuilderPage() {
   const router = useRouter();
 
-  // Form state
+  // Form state — initialised from localStorage so back-navigation restores the form
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,29 +148,67 @@ export default function BuilderPage() {
     localStorage.setItem("pcforge_theme", theme);
   }, [theme]);
 
+  // ── Restore form state from localStorage ───────────────────────
+  const _ls = (key: string, fallback: string) => {
+    if (typeof window === "undefined") return fallback;
+    return localStorage.getItem(`pcforge_builder_${key}`) ?? fallback;
+  };
+  const _lsNum = (key: string, fallback: number) => {
+    const v = _ls(key, String(fallback));
+    const n = parseFloat(v);
+    return isNaN(n) ? fallback : n;
+  };
+
   // Step 1 — Usage
-  const [usageType, setUsageType] = useState<string>("");
-  const [budgetUsd, setBudgetUsd] = useState<string>("");
-  const [region, setRegion] = useState("US");
-  const [preferredBrand, setPreferredBrand] = useState("");
+  const [usageType, setUsageType] = useState<string>(() => _ls("usageType", ""));
+  const [budgetUsd, setBudgetUsd] = useState<string>(() => _ls("budgetUsd", ""));
+  const [region, setRegion] = useState(() => _ls("region", "US"));
+  const [preferredBrand, setPreferredBrand] = useState(() => _ls("preferredBrand", ""));
 
   // Step 2 — CPU + GPU
-  const [cpu, setCpu] = useState("");
-  const [gpu, setGpu] = useState("");
+  const [cpu, setCpu] = useState(() => _ls("cpu", ""));
+  const [gpu, setGpu] = useState(() => _ls("gpu", ""));
 
   // Step 3 — MB + RAM
-  const [motherboard, setMotherboard] = useState("");
-  const [ramType, setRamType] = useState("DDR5");
-  const [ramSizeGb, setRamSizeGb] = useState<number>(32);
-  const [ramSpeedMhz, setRamSpeedMhz] = useState<number>(6000);
-  const [ramModules, setRamModules] = useState<number>(2);
+  const [motherboard, setMotherboard] = useState(() => _ls("motherboard", ""));
+  const [ramType, setRamType] = useState(() => _ls("ramType", "DDR5"));
+  const [ramSizeGb, setRamSizeGb] = useState<number>(() => _lsNum("ramSizeGb", 32));
+  const [ramSpeedMhz, setRamSpeedMhz] = useState<number>(() => _lsNum("ramSpeedMhz", 6000));
+  const [ramModules, setRamModules] = useState<number>(() => _lsNum("ramModules", 2));
 
   // Step 4 — Storage + Cooling
-  const [storageType, setStorageType] = useState("NVMe Gen4");
-  const [storageCapacityGb, setStorageCapacityGb] = useState<number>(1024);
-  const [psu, setPsu] = useState("");
-  const [caseName, setCaseName] = useState("");
-  const [cooler, setCooler] = useState("");
+  const [storageType, setStorageType] = useState(() => _ls("storageType", "NVMe Gen4"));
+  const [storageCapacityGb, setStorageCapacityGb] = useState<number>(() => _lsNum("storageCapacityGb", 1024));
+  const [psu, setPsu] = useState(() => _ls("psu", ""));
+  const [caseName, setCaseName] = useState(() => _ls("caseName", ""));
+  const [cooler, setCooler] = useState(() => _ls("cooler", ""));
+
+  // ── Persist every change to localStorage ───────────────────────
+  useEffect(() => {
+    const save = (k: string, v: string | number) =>
+      localStorage.setItem(`pcforge_builder_${k}`, String(v));
+    save("usageType", usageType);
+    save("budgetUsd", budgetUsd);
+    save("region", region);
+    save("preferredBrand", preferredBrand);
+    save("cpu", cpu);
+    save("gpu", gpu);
+    save("motherboard", motherboard);
+    save("ramType", ramType);
+    save("ramSizeGb", ramSizeGb);
+    save("ramSpeedMhz", ramSpeedMhz);
+    save("ramModules", ramModules);
+    save("storageType", storageType);
+    save("storageCapacityGb", storageCapacityGb);
+    save("psu", psu);
+    save("caseName", caseName);
+    save("cooler", cooler);
+  }, [
+    usageType, budgetUsd, region, preferredBrand,
+    cpu, gpu, motherboard,
+    ramType, ramSizeGb, ramSpeedMhz, ramModules,
+    storageType, storageCapacityGb, psu, caseName, cooler,
+  ]);
 
   // ── Navigation helpers ──────────────────────────────────────────
   const canAdvance = (): boolean => {

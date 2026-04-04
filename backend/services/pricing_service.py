@@ -198,11 +198,24 @@ _GPU_PRICE_FLOOR: Dict[str, float] = {
     "9070 xt": 550.0,
 }
 
+# Upper-price ceilings for older generation GPUs
+_GPU_PRICE_CEILING: Dict[str, float] = {
+    "3060 ti": 380.0,
+    "3060":    350.0,
+    "3070 ti": 550.0,
+    "3070":    500.0,
+    "3080 ti": 750.0,
+    "3080":    700.0,
+    "3090 ti": 900.0,
+    "3090":    800.0,
+    "3050":    250.0,
+}
+
 # ─── Category fallback prices ─────────────────────────────────────────────────
 
 _CATEGORY_FALLBACK: Dict[str, float] = {
     "CPU":         250.0,
-    "GPU":        2000.0,   # High default: most missing GPUs are high-end
+    "GPU":         300.0,   # Conservative default; floor/ceiling logic adjusts for specific models
     "Motherboard": 200.0,
     "RAM":         120.0,
     "Storage":     150.0,
@@ -238,14 +251,28 @@ def _add_price_jitter(base_price: float, pct: float = 0.03) -> float:
 def _apply_gpu_floor(model: str, price: float) -> float:
     """
     Enforce minimum price for known GPU tiers.
-    Multi-word tokens (e.g. '5070 ti') are checked before single-word ones
-    so that '5070 ti' is not matched by the shorter '5070' rule.
+    Multi-word tokens checked before single-word ones (longest match wins).
     """
     model_lower = model.lower()
-    # Sort by length descending so multi-word tokens match first
     for token in sorted(_GPU_PRICE_FLOOR, key=len, reverse=True):
         if token in model_lower:
             return max(price, _GPU_PRICE_FLOOR[token])
+    return price
+
+
+def _apply_gpu_ceiling(model: str, price: float) -> float:
+    """Enforce maximum price for older-generation GPU models."""
+    model_lower = model.lower()
+    for token in sorted(_GPU_PRICE_CEILING, key=len, reverse=True):
+        if token in model_lower:
+            return min(price, _GPU_PRICE_CEILING[token])
+    return price
+
+
+def _apply_gpu_clamps(model: str, price: float) -> float:
+    """Apply both floor and ceiling in the correct order."""
+    price = _apply_gpu_floor(model, price)
+    price = _apply_gpu_ceiling(model, price)
     return price
 
 
@@ -397,7 +424,7 @@ class PricingService:
         price = data["price"]
         effective_category = data.get("category", category)
         if effective_category == "GPU":
-            price = _apply_gpu_floor(model, price)
+            price = _apply_gpu_clamps(model, price)
         return PricedPart(
             category=effective_category,
             brand=data["brand"],
@@ -412,10 +439,10 @@ class PricingService:
         )
 
     def _fallback_priced_part(self, model: str, category: str) -> PricedPart:
-        """Guaranteed last-resort. Applies GPU floor so 5090 never gets <$1800."""
+        """Guaranteed last-resort. Applies GPU floor+ceiling."""
         base = _fallback_price_value(category)
         if category == "GPU":
-            base = _apply_gpu_floor(model, base)
+            base = _apply_gpu_clamps(model, base)
         brand = model.split()[0] if model and model.split() else "Unknown"
         return PricedPart(
             category=category,

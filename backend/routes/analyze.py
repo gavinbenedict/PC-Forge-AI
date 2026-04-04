@@ -19,7 +19,7 @@ from backend.services.pricing_service import pricing_service
 from backend.services.prediction_service import prediction_service
 from backend.services.recommendation_service import run_recommendations
 from backend.utils.normalizer import normalize_build_spec
-from backend.utils.currency import symbol as fx_symbol
+from backend.utils.currency import symbol as fx_symbol, convert as fx_convert, get_rate as fx_rate
 from backend.data.catalogue import master_catalogue
 
 logger = logging.getLogger(__name__)
@@ -358,7 +358,27 @@ async def analyze_build(spec: BuildSpec) -> AnalyzeResponse:
 
     live_count = len(pricing) - predicted_count
 
-    # ── Step 9: Return response ───────────────────────────────────────────────
+    # ── Step 9: Apply real currency conversion to all prices ──────────────────
+    if currency != "USD":
+        rate = fx_rate(currency)
+        converted: List[PricedPart] = []
+        for p in pricing:
+            converted.append(PricedPart(
+                category=p.category,
+                brand=p.brand,
+                model=p.model,
+                price_usd=round(p.price_usd * rate, 2),
+                currency=currency,
+                store=p.store,
+                availability=p.availability,
+                url=p.url,
+                last_updated=p.last_updated,
+                source=p.source,
+            ))
+        pricing = converted
+        total = sum(p.price_usd for p in pricing)
+
+    # ── Step 10: Return response ───────────────────────────────────────────────
     return AnalyzeResponse(
         build_id=build_id,
         timestamp=timestamp,

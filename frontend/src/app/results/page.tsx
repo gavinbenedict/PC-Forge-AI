@@ -1,12 +1,10 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   type AnalyzeResponse,
   type PricedPart,
-  type ResolvedComponent,
-  type CompatibilityIssue,
   exportExcel,
   exportCSV,
   downloadBlob,
@@ -23,8 +21,13 @@ const TIER_CONFIG = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmt(n: number) {
-  return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function fmt(n: number, currency?: string) {
+  // Large-valued currencies (INR, JPY etc.) don't show cents
+  const noCents = currency && ["INR", "JPY"].includes(currency.toUpperCase());
+  return n.toLocaleString("en-US", {
+    minimumFractionDigits: noCents ? 0 : 2,
+    maximumFractionDigits: noCents ? 0 : 2,
+  });
 }
 
 function getSourceBadge(source: string) {
@@ -72,44 +75,44 @@ type TabId = (typeof TABS)[number]["id"];
 // ─── Component Card ───────────────────────────────────────────────────────────
 
 function CompCard({
-  comp,
-  price,
+  part,
   sym,
+  currency,
+  isAutoFilled,
 }: {
-  comp: ResolvedComponent;
-  price?: PricedPart;
+  part: PricedPart;
   sym: string;
+  currency: string;
+  isAutoFilled?: boolean;
 }) {
   return (
-    <div className={`comp-card ${comp.is_auto_filled ? "autofill" : ""}`}>
+    <div className={`comp-card ${isAutoFilled ? "autofill" : ""}`}>
       <div className="comp-cat">
-        <span>{comp.category}</span>
-        {comp.is_auto_filled && (
+        <span>{part.category}</span>
+        {isAutoFilled && (
           <span className="badge badge-amber">Auto-filled</span>
         )}
       </div>
       <div className="comp-model">
-        {displayName(comp.brand, comp.model)}
+        {displayName(part.brand, part.model)}
       </div>
-      {price && (
-        <div
-          className={`comp-price ${
-            price.source === "predicted" ? "predicted" : ""
-          }`}
+      <div
+        className={`comp-price ${
+          part.source === "predicted" ? "predicted" : ""
+        }`}
+      >
+        {sym}{fmt(part.price_usd, currency)}
+        <span
+          style={{
+            fontSize: 10,
+            marginLeft: 6,
+            color: "var(--text-muted)",
+            fontWeight: 400,
+          }}
         >
-          {sym}{fmt(price.price_usd)}
-          <span
-            style={{
-              fontSize: 10,
-              marginLeft: 6,
-              color: "var(--text-muted)",
-              fontWeight: 400,
-            }}
-          >
-            {price.store}
-          </span>
-        </div>
-      )}
+          {part.store}
+        </span>
+      </div>
     </div>
   );
 }
@@ -148,16 +151,6 @@ export default function ResultsPage() {
     }
   }, [router]);
 
-  // Build a quick price map: model → PricedPart
-  const priceMap = useCallback((): Record<string, PricedPart> => {
-    if (!data) return {};
-    const m: Record<string, PricedPart> = {};
-    for (const p of data.pricing) {
-      m[p.model] = p;
-      m[`${p.brand} ${p.model}`] = p;
-    }
-    return m;
-  }, [data]);
 
   if (!data) {
     return (
@@ -181,9 +174,9 @@ export default function ResultsPage() {
 
   const tier      = data.inferred_tier;
   const tierCfg   = TIER_CONFIG[tier] || TIER_CONFIG["mid-range"];
-  const prices    = priceMap();
   const summary   = data.price_summary;
   const sym       = summary.symbol || "$";
+  const currency  = summary.currency || "USD";
   const compat    = data.compatibility;
   const recs      = data.recommendations;
   const errorCount = compat.issues.filter((i) => i.severity === "error").length;
@@ -341,37 +334,37 @@ export default function ResultsPage() {
               <div className="stat-block">
                 <div className="stat-label">Total Cost</div>
                 <div className="stat-value green">
-                  {sym}{fmt(summary.total_combined_usd)}
+                  {sym}{fmt(summary.total_combined_usd, currency)}
                 </div>
               </div>
               <div className="stat-block">
                 <div className="stat-label">Live Prices</div>
                 <div className="stat-value">
-                  {sym}{fmt(summary.total_live_usd)}
+                  {sym}{fmt(summary.total_live_usd, currency)}
                 </div>
               </div>
               <div className="stat-block">
                 <div className="stat-label">ML Predicted</div>
                 <div className="stat-value amber">
-                  {sym}{fmt(summary.total_predicted_usd)}
+                  {sym}{fmt(summary.total_predicted_usd, currency)}
                 </div>
               </div>
               <div className="stat-block">
                 <div className="stat-label">Market Low</div>
                 <div className="stat-value">
-                  {sym}{fmt(summary.market_range.min_price)}
+                  {sym}{fmt(summary.market_range.min_price, currency)}
                 </div>
               </div>
               <div className="stat-block">
                 <div className="stat-label">Market High</div>
                 <div className="stat-value">
-                  {sym}{fmt(summary.market_range.max_price)}
+                  {sym}{fmt(summary.market_range.max_price, currency)}
                 </div>
               </div>
               <div className="stat-block">
                 <div className="stat-label">Components</div>
                 <div className="stat-value">
-                  {data.completed_build.length}
+                  {data.pricing.length}
                 </div>
               </div>
             </div>
@@ -402,7 +395,7 @@ export default function ResultsPage() {
               </div>
             )}
 
-            {/* Component cards grid */}
+            {/* Component cards grid — sourced from data.pricing (always complete) */}
             <div className="section-title" style={{ marginBottom: 16 }}>
               Completed Build
             </div>
@@ -414,19 +407,15 @@ export default function ResultsPage() {
               }}
               className="stagger"
             >
-              {data.completed_build.map((comp) => {
-                const price =
-                  prices[`${comp.brand} ${comp.model}`] ||
-                  prices[comp.model];
-                return (
-                  <CompCard
-                    key={`${comp.category}-${comp.model}`}
-                    comp={comp}
-                    price={price}
-                    sym={sym}
-                  />
-                );
-              })}
+              {data.pricing.map((part) => (
+                <CompCard
+                  key={`${part.category}-${part.model}`}
+                  part={part}
+                  sym={sym}
+                  currency={currency}
+                  isAutoFilled={data.auto_filled_components.includes(part.category)}
+                />
+              ))}
             </div>
           </>
         )}
@@ -485,7 +474,7 @@ export default function ResultsPage() {
               <div className="stat-block">
                 <div className="stat-label">Total (Combined)</div>
                 <div className="stat-value green mono-val">
-                  {sym}{fmt(summary.total_combined_usd)}
+                  {sym}{fmt(summary.total_combined_usd, currency)}
                 </div>
               </div>
               <div className="stat-block">
@@ -512,7 +501,7 @@ export default function ResultsPage() {
                       <th>Model</th>
                       <th>Store</th>
                       <th>Source</th>
-                      <th style={{ textAlign: "right" }}>Price (USD)</th>
+                      <th style={{ textAlign: "right" }}>Price ({currency})</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -532,7 +521,7 @@ export default function ResultsPage() {
                           }
                           style={{ textAlign: "right" }}
                         >
-                          {sym}{fmt(p.price_usd)}
+                          {sym}{fmt(p.price_usd, currency)}
                           {p.predicted_range && (
                             <span
                               style={{
@@ -542,8 +531,8 @@ export default function ResultsPage() {
                                 fontWeight: 400,
                               }}
                             >
-                              {sym}{fmt(p.predicted_range.min_price)} –{" "}
-                              {sym}{fmt(p.predicted_range.max_price)}
+                              {sym}{fmt(p.predicted_range.min_price, currency)} –{" "}
+                              {sym}{fmt(p.predicted_range.max_price, currency)}
                             </span>
                           )}
                         </td>
@@ -572,7 +561,7 @@ export default function ResultsPage() {
                           fontVariantNumeric: "tabular-nums",
                         }}
                       >
-                        {sym}{fmt(summary.total_combined_usd)}
+                        {sym}{fmt(summary.total_combined_usd, currency)}
                       </td>
                     </tr>
                   </tbody>
@@ -748,7 +737,7 @@ export default function ResultsPage() {
                           className="td-price"
                           style={{ textAlign: "right" }}
                         >
-                          {sym}{fmt(r.price_usd)}
+                          {sym}{fmt(r.price_usd, currency)}
                         </td>
                         <td>
                           <span
@@ -812,7 +801,7 @@ export default function ResultsPage() {
                                 className="td-price"
                                 style={{ textAlign: "right" }}
                               >
-                                {sym}{fmt(alt.price_usd)}
+                                {sym}{fmt(alt.price_usd, currency)}
                               </td>
                             </tr>
                           ))
@@ -866,8 +855,8 @@ export default function ResultsPage() {
       {/* ── Sticky export bar ─────────────────────────────────── */}
       <div className="export-bar">
         <div className="export-bar-info">
-          <strong>{sym}{fmt(summary.total_combined_usd)}</strong> ·{" "}
-          {data.completed_build.length} components ·{" "}
+          <strong>{sym}{fmt(summary.total_combined_usd, currency)}</strong> ·{" "}
+          {data.pricing.length} components ·{" "}
           Build{" "}
           <strong style={{ color: "var(--red)" }}>
             {data.build_id.slice(0, 8).toUpperCase()}
