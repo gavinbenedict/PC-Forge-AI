@@ -70,15 +70,6 @@ export default function ParticleCanvas() {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // ── Read current theme on every frame ─────────────────────
-      const isLight =
-        document.documentElement.getAttribute("data-theme") === "light";
-
-      // Palette based on theme
-      const nodeColor   = isLight ? "0,0,0"         : "255,255,255";
-      const linkAlphaMul = isLight ? 0.08            : 0.12;
-      const nodeAlphaMul = isLight ? 0.18            : 1.0;  // lighter = more subtle
-      const redR         = isLight ? "220,60,30"     : "255,40,40";
 
       const w = canvas.width;
       const h = canvas.height;
@@ -93,6 +84,31 @@ export default function ParticleCanvas() {
         p.pulse += 0.012;
       }
 
+      // ── Theme helpers — called per-draw so toggle is instant ──
+      const getTheme = () =>
+        document.documentElement.getAttribute("data-theme") || "dark";
+
+      const getNodeColor = (alpha: number) => {
+        return getTheme() === "dark"
+          ? `rgba(255,255,255,${(alpha * 0.35).toFixed(3)})`
+          : `rgba(0,0,0,${(alpha * 0.12).toFixed(3)})`;
+      };
+
+      const getLinkColor = (alpha: number, isRedLink: boolean) => {
+        if (isRedLink) {
+          const r = getTheme() === "dark" ? "255,40,40" : "220,60,30";
+          return `rgba(${r},${(alpha * (getTheme() === "dark" ? 0.18 : 0.12)).toFixed(3)})`;
+        }
+        return getTheme() === "dark"
+          ? `rgba(255,255,255,${(alpha * 0.12).toFixed(3)})`
+          : `rgba(0,0,0,${(alpha * 0.08).toFixed(3)})`;
+      };
+
+      const getRedColor = (alpha: number) => {
+        const r = getTheme() === "dark" ? "255,40,40" : "220,60,30";
+        return `rgba(${r},${alpha.toFixed(3)})`;
+      };
+
       // Draw links
       ctx.lineWidth = 0.4;
       for (let i = 0; i < particles.length; i++) {
@@ -105,14 +121,7 @@ export default function ParticleCanvas() {
           if (d2 > LINK_DIST * LINK_DIST) continue;
 
           const t     = 1 - Math.sqrt(d2) / LINK_DIST;
-          const alpha = t * linkAlphaMul;
-
-          if (a.isRed || b.isRed) {
-            ctx.strokeStyle = `rgba(${redR}, ${alpha * 1.5})`;
-          } else {
-            ctx.strokeStyle = `rgba(${nodeColor}, ${alpha})`;
-          }
-
+          ctx.strokeStyle = getLinkColor(t, a.isRed || b.isRed);
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
           ctx.lineTo(b.x, b.y);
@@ -120,7 +129,7 @@ export default function ParticleCanvas() {
         }
       }
 
-      // Draw particles
+      // Draw particles — color computed per particle so theme switch is instant
       for (const p of particles) {
         if (p.isRed) {
           const pAlpha = p.alpha * (0.7 + 0.3 * Math.sin(p.pulse));
@@ -128,8 +137,8 @@ export default function ParticleCanvas() {
 
           // Outer glow
           const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pRad * 4);
-          grd.addColorStop(0, `rgba(${redR}, ${pAlpha * 0.6})`);
-          grd.addColorStop(1, `rgba(${redR}, 0)`);
+          grd.addColorStop(0, getRedColor(pAlpha * 0.6));
+          grd.addColorStop(1, getRedColor(0));
           ctx.beginPath();
           ctx.arc(p.x, p.y, pRad * 4, 0, Math.PI * 2);
           ctx.fillStyle = grd;
@@ -138,14 +147,12 @@ export default function ParticleCanvas() {
           // Core dot
           ctx.beginPath();
           ctx.arc(p.x, p.y, pRad, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${redR}, ${pAlpha})`;
+          ctx.fillStyle = getRedColor(pAlpha);   // computed per particle
           ctx.fill();
         } else {
-          // Normal node — dimmed in light mode
-          const a = p.alpha * nodeAlphaMul;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${nodeColor}, ${a})`;
+          ctx.fillStyle = getNodeColor(p.alpha);  // computed per particle
           ctx.fill();
         }
       }
