@@ -20,7 +20,7 @@ interface Particle {
 }
 
 const LINK_DIST    = 110;
-const RED_CHANCE   = 0.06;
+const RED_CHANCE   = 0.3;
 const SPEED_MAX    = 0.28;
 const DENSITY      = 14000;
 
@@ -37,7 +37,7 @@ export default function ParticleCanvas() {
         y:      Math.random() * h,
         vx:     (Math.random() - 0.5) * SPEED_MAX * 2,
         vy:     (Math.random() - 0.5) * SPEED_MAX * 2,
-        radius: Math.random() * 1.2 + 0.4,
+        radius: Math.random() * 1.2 + 0.6,
         alpha:  Math.random() * 0.4 + 0.1,
         isRed:  Math.random() < RED_CHANCE,
         pulse:  Math.random() * Math.PI * 2,
@@ -90,14 +90,14 @@ export default function ParticleCanvas() {
           document.documentElement.getAttribute("data-theme") || "dark";
         if (theme === "dark") {
           return {
-            dot:    "rgba(255,255,255,0.55)",
-            line:   "rgba(255,255,255,0.25)",
+            dot:    "rgba(255, 255, 255, 1)",
+            line:   "rgba(255, 255, 255, 0.36)",
             redRgb: "255,40,40",
           };
         }
         return {
-          dot:    "rgba(0,0,0,0.35)",
-          line:   "rgba(0,0,0,0.18)",
+          dot:    "rgba(0, 0, 0, 1)",
+          line:   "rgba(0, 0, 0, 0.2)",
           redRgb: "220,60,30",
         };
       };

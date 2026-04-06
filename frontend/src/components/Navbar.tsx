@@ -49,6 +49,9 @@ export default function Navbar() {
         <Link href="/#how" className="nav-link">
           How It Works
         </Link>
+        <Link href="/#contact" className="nav-link">
+          Contacts
+        </Link>
       </div>
 
       {/* Actions — Start Build + theme toggle */}
@@ -59,30 +62,30 @@ export default function Navbar() {
             onClick={toggleTheme}
             aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             style={{
-              display:        "inline-flex",
-              alignItems:     "center",
-              gap:            "6px",
-              padding:        "6px 12px",
-              borderRadius:   "4px",
-              border:         "1px solid var(--border-subtle)",
-              background:     "transparent",
-              fontFamily:     "var(--font)",
-              fontSize:       "10px",
-              fontWeight:     700,
-              letterSpacing:  "0.16em",
-              color:          "var(--text-muted)",
-              cursor:         "pointer",
-              transition:     "color 0.2s ease, border-color 0.2s ease",
-              whiteSpace:     "nowrap",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 12px",
+              borderRadius: "4px",
+              border: "1px solid var(--border-subtle)",
+              background: "transparent",
+              fontFamily: "var(--font)",
+              fontSize: "10px",
+              fontWeight: 700,
+              letterSpacing: "0.16em",
+              color: "var(--text-muted)",
+              cursor: "pointer",
+              transition: "color 0.2s ease, border-color 0.2s ease",
+              whiteSpace: "nowrap",
             }}
             onMouseEnter={(e) => {
               const b = e.currentTarget as HTMLButtonElement;
-              b.style.color       = "var(--text-main)";
+              b.style.color = "var(--text-main)";
               b.style.borderColor = "var(--text-main)";
             }}
             onMouseLeave={(e) => {
               const b = e.currentTarget as HTMLButtonElement;
-              b.style.color       = "var(--text-muted)";
+              b.style.color = "var(--text-muted)";
               b.style.borderColor = "var(--border-subtle)";
             }}
           >
