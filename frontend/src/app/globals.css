@@ -1817,3 +1817,93 @@ h6 {
     gap: 8px;
   }
 }
+
+/* ── Mobile: Navbar ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  /* Hide full nav link list — only show brand + actions */
+  .navbar-nav {
+    display: none;
+  }
+
+  .navbar-actions {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .navbar-brand {
+    font-size: 14px;
+  }
+}
+
+/* ── Mobile: Hero ────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: clamp(32px, 10vw, 52px);
+    text-align: center;
+  }
+
+  .hero-sub {
+    font-size: 13px;
+    padding: 0 8px;
+  }
+
+  /* Stack CTA buttons vertically */
+  .hero-cta {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 320px;
+    gap: 10px;
+  }
+
+  .hero-cta .btn {
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Stats bar: 2×2 grid on mobile */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 100%;
+  }
+
+  .stat-bar-item {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-bar-item:nth-child(odd) {
+    border-right: 1px solid var(--border);
+  }
+
+  .stat-bar-item:nth-child(3),
+  .stat-bar-item:nth-child(4) {
+    border-bottom: none;
+  }
+}
+
+/* ── Mobile: Contact buttons ─────────────────────────────────── */
+@media (max-width: 480px) {
+  .section-block {
+    padding: 56px 0;
+  }
+
+  /* Stack contact buttons full-width on mobile */
+  #contact .container > div:last-child {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+  }
+
+  #contact .container > div:last-child .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
