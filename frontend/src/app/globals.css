@@ -1106,9 +1106,20 @@ h6 {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 120px 24px 80px;
+  padding: 120px 24px 120px;
   position: relative;
   overflow: hidden;
+}
+
+/* Section vertical spacing */
+.section-block {
+  padding: 96px 0;
+}
+
+@media (max-width: 640px) {
+  .section-block {
+    padding: 64px 0;
+  }
 }
 
 .hero-eyebrow {
