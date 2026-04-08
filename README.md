@@ -1,5 +1,3 @@
-
-
 # PCForge AI
 
 > Intelligent PC Build Analysis · Strict Compatibility · Real-time Pricing · Global Currency
